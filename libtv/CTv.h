@@ -17,7 +17,8 @@
 #include "CTvAudio.h"
 #endif
 
-#define CONFIG_FILE_PATH_DEF               "/vendor/etc/tvconfig/tvconfig.conf"
+#define CONFIG_FILE_PATH_DEF               "/etc/tvconfig/tvconfig.conf"
+#define CONFIG_EDID_FILE_PATH_DEF          "/etc/tvconfig/hdmi"
 
 #define DOLBY_VISION_TV_KO_PATH            "/vendor/lib/modules/dovi_tv.ko"
 #define DOLBY_VISION_STB_KO_PATH           "/vendor/lib/modules/dovi.ko"

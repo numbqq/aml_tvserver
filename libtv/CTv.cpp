@@ -373,7 +373,7 @@ int CTv::LoadEdidData(int isNeedBlackScreen, int isDolbyVisionEnable)
     char edidReadBuf[REAL_EDID_DATA_SIZE] = {0};
     char edidFileName[100] = {0};
     int loadNum = 1;
-    const char *edidFilePath = ConfigGetStr(CFG_SECTION_HDMI, CFG_HDMI_EDID_FILE_PATH, "/vendor/etc/tvconfig/hdmi");
+    const char *edidFilePath = ConfigGetStr(CFG_SECTION_HDMI, CFG_HDMI_EDID_FILE_PATH, CONFIG_EDID_FILE_PATH_DEF);
     const char *dolbyModulePath = ConfigGetStr(CFG_SECTION_SETTING, CFG_DOLBY_MODULE, DOLBY_VISION_TV_KO_PATH);
     bool isDolbyVisionKoExist = isFileExist(dolbyModulePath) || isFileExist(DOLBY_VISION_STB_KO_PATH);
     LOGD("%s: isDolbyVisionKoExist = %d, isDolbyVisionEnable = %d.\n", __FUNCTION__, isDolbyVisionKoExist, isDolbyVisionEnable);
