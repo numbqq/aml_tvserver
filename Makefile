@@ -52,15 +52,15 @@ tvservice_SRCS  = \
 	$(NULL)
 
 ################################################################################
-# tvtest - src files
+# hdmiin-demo - src files
 ################################################################################
-tvtest_SRCS  = \
+hdmiin-demo_SRCS  = \
 	$(LOCAL_PATH)/test/main_tvtest.c \
 	$(NULL)
 
 # ---------------------------------------------------------------------
 #  Build rules
-BUILD_TARGETS = libtvclient.so libtv.so tvservice tvtest
+BUILD_TARGETS = libtvclient.so libtv.so tvservice hdmiin-demo
 
 .PHONY: all install clean
 
@@ -77,7 +77,7 @@ tvservice: $(tvservice_SRCS) libtv.so
 	-I$(LOCAL_PATH)/libtv -I$(LOCAL_PATH)/libtv/tvutils \
 	-L$(LOCAL_PATH) -ltv -laudio_client -o $@ $^ $(LDLIBS)
 
-tvtest: $(tvtest_SRCS) libtvclient.so
+hdmiin-demo: $(hdmiin-demo_SRCS) libtvclient.so
 	$(CC) $(CFLAGS) -I$(tvclient_HEADERS) -L$(LOCAL_PATH) \
 	-ltvclient $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
@@ -88,11 +88,11 @@ clean:
 	rm -rf $(TARGET_DIR)/usr/include/tvclient
 	rm -rf $(TARGET_DIR)/usr/lib/aarch64-linux-gnu/libtvclient.so
 	rm -rf $(TARGET_DIR)/usr/lib/aarch64-linux-gnu/libtv.so
-	rm -rf $(TARGET_DIR)/usr/bin/tvtest
+	rm -rf $(TARGET_DIR)/usr/bin/hdmiin-demo
 	rm -rf $(TARGET_DIR)/usr/bin/tvservice
 
 install:
 	install -m 0644 libtvclient.so $(TARGET_DIR)/usr/lib/aarch64-linux-gnu
 	install -m 0644 libtv.so $(TARGET_DIR)/usr/lib/aarch64-linux-gnu
 	install -m 0755 tvservice $(TARGET_DIR)/usr/bin/
-	install -m 0755 tvtest $(TARGET_DIR)/usr/bin/
+	install -m 0755 hdmiin-demo $(TARGET_DIR)/usr/bin/
