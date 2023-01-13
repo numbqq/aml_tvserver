@@ -1,0 +1,160 @@
+################################################################################
+# Device/Makefile
+#
+# This Makefile builds the libs
+#
+################################################################################
+OUT_ROOT ?= dist
+
+DEPENDS := audio_client libbinder
+DEPENDS := $(addsuffix /build, $(addprefix $(OUT_ROOT)/../../, $(DEPENDS)))
+override LDFLAGS += $(addprefix -L, $(DEPENDS))
+
+LOCAL_PATH = .
+AUDIO_HAL_DIR = $(AML_COMMON_DIR)/audio_hal
+CUTILS_DIR = $(AML_COMMON_DIR)/cutils
+TVSERVER_DIR = $(AML_COMMON_DIR)/tvserver
+BINDER_DIR = $(AML_COMMON_DIR)/aml_commonlib/libbinder
+
+CFLAGS += -Wall -D_GNU_SOURCE -DHAVE_AUDIO
+
+################################################################################
+# libpq.so - src files
+################################################################################
+pq_SRCS = \
+	$(LOCAL_PATH)/libpq/CPQdb.cpp \
+	$(LOCAL_PATH)/libpq/COverScandb.cpp \
+	$(LOCAL_PATH)/libpq/CPQControl.cpp  \
+	$(LOCAL_PATH)/libpq/CSqlite.cpp  \
+	$(LOCAL_PATH)/libpq/SSMAction.cpp  \
+	$(LOCAL_PATH)/libpq/SSMHandler.cpp  \
+	$(LOCAL_PATH)/libpq/SSMHeader.cpp  \
+	$(LOCAL_PATH)/libpq/CDevicePollCheckThread.cpp  \
+	$(LOCAL_PATH)/libpq/CPQColorData.cpp  \
+	$(LOCAL_PATH)/libpq/CPQLog.cpp  \
+	$(LOCAL_PATH)/libpq/CPQFile.cpp  \
+	$(LOCAL_PATH)/libpq/CEpoll.cpp \
+	$(LOCAL_PATH)/libpq/CDynamicBackLight.cpp \
+	$(LOCAL_PATH)/libpq/CConfigFile.cpp \
+	$(NULL)
+
+################################################################################
+# libtv.so - src files
+################################################################################
+tv_SRCS  = \
+	$(LOCAL_PATH)/libtv/tvutils/CFile.cpp \
+	$(LOCAL_PATH)/libtv/tvutils/ConfigFile.cpp \
+	$(LOCAL_PATH)/libtv/tvutils/CSerialPort.cpp \
+	$(LOCAL_PATH)/libtv/tvutils/TvConfigManager.cpp \
+	$(LOCAL_PATH)/libtv/tvutils/tvutils.cpp \
+	$(LOCAL_PATH)/libtv/tvutils/zepoll.cpp \
+	$(LOCAL_PATH)/libtv/tvutils/CTvLog.cpp \
+	$(LOCAL_PATH)/libtv/CHDMIRxManager.cpp \
+	$(LOCAL_PATH)/libtv/CTv.cpp \
+	$(LOCAL_PATH)/libtv/CTvin.cpp \
+	$(LOCAL_PATH)/libtv/CTvDevicesPollDetect.cpp \
+	$(LOCAL_PATH)/libtv/CTvAudio.cpp \
+	$(NULL)
+
+################################################################################
+# libtvclient.so - src files
+################################################################################
+tvclient_SRCS  = \
+	$(LOCAL_PATH)/client/TvClient.cpp \
+	$(LOCAL_PATH)/client/CTvClientLog.cpp \
+	$(NULL)
+
+################################################################################
+# tvservice - src files
+################################################################################
+tvservice_SRCS  = \
+	$(LOCAL_PATH)/service/main_tvservice.cpp \
+	$(LOCAL_PATH)/service/TvService.cpp \
+	$(NULL)
+
+################################################################################
+# tvtest - src files
+################################################################################
+tvtest_SRCS  = \
+	$(LOCAL_PATH)/test/main_tvtest.cpp \
+	$(NULL)
+
+#TODO: Add more include directories here, if necessary.
+INCLUDES += \
+	-I$(LOCAL_PATH)/client/include \
+	-I$(LOCAL_PATH)/libtv \
+	-I$(LOCAL_PATH)/libtv/tvutils \
+	-I$(LOCAL_PATH)/libpq \
+	-I$(ROKU_3PARTY_INCLUDE_DIRS)/../usr/include \
+	-I$(AUDIO_HAL_DIR) \
+	-I$(AUDIO_HAL_DIR)/include \
+	-I$(CUTILS_DIR)/include \
+	-I$(BINDER_DIR)/include \
+	$(NULL)
+
+ALL_SRCS = $(pq_SRCS) $(tv_SRCS) $(tvclient_SRCS) $(tvservice_SRCS) $(tvtest_SRCS)
+CLEAN_FILES = libpq/PQSettingCfg.h libpq/SSMHeader.cpp
+
+include $(ROKU_PORT_COMMON_DIR)/build/define_target.mk
+
+comma = ,
+$(eval $(call DEFINE_TARGET,libpq.so,$(pq_SRCS),,$(LDFLAGS) -lstdc++ -lpthread -lz -ldl -lrt -lm -lsqlite3 -fPIC -shared -Wl$(comma)-z$(comma)defs -Wl$(comma)--build-id,lib))
+$(eval $(call DEFINE_TARGET,libtvclient.so,$(tvclient_SRCS),,$(LDFLAGS) -lstdc++ -lpthread -lz -ldl -lrt -lbinder -fPIC -shared -Wl$(comma)-z$(comma)defs -Wl$(comma)--build-id,lib))
+$(eval $(call DEFINE_TARGET,libtv.so,$(tv_SRCS),,$(LDFLAGS) -L$(OUT_ROOT) -lpq -laudio_client -lexpat -lboost_system -lboost_filesystem -lstdc++ -lpthread -lz -ldl -lrt -fPIC -shared -Wl$(comma)-z$(comma)defs -Wl$(comma)--build-id,lib))
+$(eval $(call DEFINE_TARGET,tvservice,$(tvservice_SRCS),,$(LDFLAGS) -L$(OUT_ROOT) -lpq -ltv -lstdc++ -lpthread -lz -ldl -lrt -lbinder -lsqlite3 -laudio_client -lexpat -lboost_system -lboost_filesystem -Wl$(comma)-z$(comma)defs -Wl$(comma)--build-id,bin))
+$(eval $(call DEFINE_TARGET,tvtest,$(tvtest_SRCS),,$(LDFLAGS) -L$(OUT_ROOT) -ltvclient -lstdc++ -lpthread -lz -ldl -lrt -lbinder -Wl$(comma)-z$(comma)defs -Wl$(comma)--build-id,bin))
+
+# ---------------------------------------------------------------------
+#  Build rules
+all: $(VENDOR_ALL_TARGETS) $(NATIVE_ALL_TARGETS)
+# Compile .c file.
+# Simultaneously create .d file (see http://make.mad-scientist.net/papers/advanced-auto-dependency-generation).
+$(OUT_ROOT)/%.o: %.c $(OUT_ROOT)/%.d
+	mkdir -p $(dir $@)
+	$(CC) -MT $@ -MMD -MP -MF $(OUT_ROOT)/$*.Td $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	mv -f $(OUT_ROOT)/$*.Td $(OUT_ROOT)/$*.d && touch $@
+# Compile .cpp file.
+# Simultaneously create .d file (see http://make.mad-scientist.net/papers/advanced-auto-dependency-generation).
+$(OUT_ROOT)/%.o: %.cpp $(OUT_ROOT)/%.d
+	@mkdir -p $(dir $@)
+	$(CXX) -MT $@ -MMD -MP -MF $(OUT_ROOT)/$*.Td $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	mv -f $(OUT_ROOT)/$*.Td $(OUT_ROOT)/$*.d && touch $@
+$(OUT_ROOT)/%.d: ;
+.PRECIOUS: $(OUT_ROOT)/%.d
+.PHONY: clean distclean install
+
+include $(wildcard $(patsubst %,$(OUT_ROOT)/%.d,$(basename $(pq_SRCS))))
+include $(wildcard $(patsubst %,$(OUT_ROOT)/%.d,$(basename $(tvclient_SRCS))))
+include $(wildcard $(patsubst %,$(OUT_ROOT)/%.d,$(basename $(tv_SRCS))))
+include $(wildcard $(patsubst %,$(OUT_ROOT)/%.d,$(basename $(tvservice_SRCS))))
+include $(wildcard $(patsubst %,$(OUT_ROOT)/%.d,$(basename $(tvtest_SRCS))))
+
+configure:
+	CSV_RET=$(shell ($(LOCAL_PATH)/libpq/csvAnalyze.sh > /dev/zero;echo $$?))
+	ifeq ($(CSV_RET), 1)
+	  $(error "Csv file or common.h file is not exist!!!!")
+	else ifeq ($(CSV_RET), 2)
+	  $(error "Csv file's Id must be integer")
+	else ifeq ($(CSV_RET), 3)
+	  $(error "Csv file's Size must be integer or defined in common.h")
+	endif
+
+clean:
+	-rm -rf $(OUT_ROOT) $(CLEAN_FILES)
+	mkdir -p $(OUT_ROOT)
+
+distclean:
+	-rm -rf $(DESTDIR)/usr/lib/libpq.so
+	-rm -rf $(DESTDIR)/usr/lib/libtvclient.so
+	-rm -rf $(DESTDIR)/usr/lib/libtv.so
+	-rm -rf $(DESTDIR)/usr/bin/tvservice
+	-rm -rf $(DESTDIR)/usr/bin/tvtest
+
+install:
+	mkdir -p $(DESTDIR)/usr/lib
+	cp $(OUT_ROOT)/libpq.so  $(DESTDIR)/usr/lib/
+	cp $(OUT_ROOT)/libtvclient.so  $(DESTDIR)/usr/lib/
+	cp $(OUT_ROOT)/libtv.so  $(DESTDIR)/usr/lib/
+	mkdir -p $(DESTDIR)/usr/bin
+	cp $(OUT_ROOT)/tvservice  $(DESTDIR)/usr/bin/
+	cp $(OUT_ROOT)/tvtest  $(DESTDIR)/usr/bin/
