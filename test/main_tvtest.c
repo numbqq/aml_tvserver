@@ -89,6 +89,7 @@ int main(int argc, char **argv) {
     DisplayInit();
 
    StartTv(pTvClientWrapper, CurrentSource);
+   SetEdidVersion(pTvClientWrapper, CurrentSource, 1);
 
    while (run)
    {
